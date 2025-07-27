@@ -1,0 +1,26 @@
+- name: Deploy Flask App to Minikube
+  hosts: minikube
+  become: yes
+  tasks:
+
+    - name: Copy application code
+      copy:
+        src: ../flask-app/
+        dest: /home/ubuntu/flask-app/
+
+    - name: Build Docker image inside Minikube
+      shell: |
+        cd /home/ubuntu/flask-app
+        /usr/local/bin/minikube docker-env > docker_env.sh
+        source docker_env.sh
+        docker build -t flask-app:latest .
+      args:
+        executable: /bin/bash
+
+    - name: Deploy app using Kubernetes
+      shell: |
+        export KUBECONFIG=/home/ubuntu/.kube/config
+        cd /home/ubuntu/flask-app
+        kubectl apply -f k8s.yaml
+      args:
+        executable: /bin/bash
